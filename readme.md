@@ -2,6 +2,14 @@
 
 UNDER CONSTRUCTION
 
+## TODO:
+- Finish the Code !!!!
+- Nice Readme
+- add DHT Sensor
+- remove bmp280
+- 3D printing Case
+- Youtube video ?
+
 ## Hardware
 - ili9341  
 - lolin esp32_s2_mini
@@ -9,3 +17,4 @@ UNDER CONSTRUCTION
 
   
 ![image](ili9341+esp32_s2_mini.jpg)
+
