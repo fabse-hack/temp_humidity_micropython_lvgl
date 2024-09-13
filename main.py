@@ -1,13 +1,16 @@
-import sys
 import lvgl as lv
 import lcd_bus
 import time
 import ili9341
-from machine import SPI, Pin, SoftI2C
-from bmp280 import BMP280 
+from machine import SPI, Pin
+import machine
 import network
 import task_handler
 from umqtt.simple import MQTTClient
+import dht
+import asyncio
+import utime
+import ntptime
 
 spi_bus = SPI.Bus(
     host=1,
@@ -41,6 +44,10 @@ display.set_rotation(lv.DISPLAY_ROTATION._90)
 
 scrn = lv.screen_active()
 scrn.set_style_bg_color(lv.color_hex(0x000000), 0)
+
+dispp = lv.display_get_default()
+theme = lv.theme_default_init(dispp, lv.palette_main(lv.PALETTE.BLUE), lv.palette_main(lv.PALETTE.RED), True, lv.font_default())
+dispp.set_theme(theme)
 
 
 ui_TemperatureChart = lv.chart(scrn)
@@ -92,7 +99,7 @@ ui_TemperatureChart_Yaxis2.set_align(lv.ALIGN.RIGHT_MID)
 ui_TemperatureChart_Yaxis2.set_x(50 + ui_TemperatureChart.get_style_pad_right(lv.PART.MAIN) + ui_TemperatureChart.get_style_border_width(lv.PART.MAIN) + 1)
 ui_TemperatureChart_Yaxis2.set_range(10, 30)
 ui_TemperatureChart_Yaxis2.set_total_tick_count((3 - 1 if 3 > 0 else 0) * 5 + 1)
-ui_TemperatureChart_Yaxis2.set_major_tick_every(5 if 5  >= 1 else 1)
+ui_TemperatureChart_Yaxis2.set_major_tick_every(5 if 5 >= 1 else 1)
 ui_TemperatureChart_Yaxis2.set_style_line_width(0, lv.PART.MAIN)
 ui_TemperatureChart_Yaxis2.set_style_line_width(1, lv.PART.ITEMS)
 ui_TemperatureChart_Yaxis2.set_style_line_width(1, lv.PART.INDICATOR)
@@ -100,12 +107,13 @@ ui_TemperatureChart_Yaxis2.set_style_length(10, lv.PART.INDICATOR)
 ui_TemperatureChart_Yaxis2.set_style_length(5, lv.PART.ITEMS)
 ui_TemperatureChart_Yaxis2.set_label_show(False)
 ui_TemperatureChart_series_1 = ui_TemperatureChart.add_series(lv.color_hex(0x0C00FF), lv.chart.AXIS.PRIMARY_Y)
-ui_TemperatureChart_series_1_array = [0, 10, 20, 10, 20, 20, 20, 20, 10, 0]
-
-ui_TemperatureChart.set_ext_y_array(ui_TemperatureChart_series_1, ui_TemperatureChart_series_1_array)
+# ui_TemperatureChart_series_1_array = [0, 10, 20, 10, 20, 20, 20, 20, 10, 0]
+# ui_TemperatureChart.set_ext_y_array(ui_TemperatureChart_series_1, ui_TemperatureChart_series_1_array)
 
 ui_TemperatureChart.set_style_outline_pad(max(50, 50, 50), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_TemperatureChart.set_style_outline_width(-1, lv.PART.MAIN | lv.STATE.DEFAULT)
+
+ui_TemperatureChart.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_HumidityChart = lv.chart(scrn)
 ui_HumidityChart.set_width(170)
@@ -117,6 +125,8 @@ ui_HumidityChart.add_flag(lv.obj.FLAG.OVERFLOW_VISIBLE)
 ui_HumidityChart.set_type(lv.chart.TYPE.LINE)
 ui_HumidityChart.set_range(lv.chart.AXIS.PRIMARY_Y, 10, 30)
 ui_HumidityChart.set_range(lv.chart.AXIS.SECONDARY_Y, 10, 30)
+
+ui_HumidityChart.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_HumidityChart_Xaxis = lv.scale(ui_HumidityChart)
 ui_HumidityChart_Xaxis.set_mode(lv.scale.MODE.HORIZONTAL_BOTTOM)
@@ -162,8 +172,8 @@ ui_HumidityChart_Yaxis2.set_style_length(5, lv.PART.ITEMS)
 ui_HumidityChart_Yaxis2.set_label_show(False)
 
 ui_HumidityChart_series_1 = ui_HumidityChart.add_series(lv.color_hex(0xFF0000), lv.chart.AXIS.PRIMARY_Y)
-ui_HumidityChart_series_1_array = [0, 10, 20, 10, 20, 20, 20, 20, 10, 0]
-ui_HumidityChart.set_ext_y_array(ui_HumidityChart_series_1, ui_HumidityChart_series_1_array)
+# ui_HumidityChart_series_1_array = [0, 10, 20, 10, 20, 20, 20, 20, 10, 0]
+# ui_HumidityChart.set_ext_y_array(ui_HumidityChart_series_1, ui_HumidityChart_series_1_array)
 
 
 ui_HumidityChart.set_style_outline_pad(max(50, 50, 50), lv.PART.MAIN | lv.STATE.DEFAULT)
@@ -177,20 +187,19 @@ ui_Temperature.set_height(lv.SIZE_CONTENT)
 ui_Temperature.set_x(-99)
 ui_Temperature.set_y(2)
 ui_Temperature.set_align(lv.ALIGN.CENTER)
-ui_Temperature.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 ui_Temperature.set_style_text_color(lv.color_hex(0x0C00FF), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_Temperature.set_style_text_opa(255, lv.PART.MAIN| lv.STATE.DEFAULT)
 
 ui_Temp_data = lv.label(scrn)
-ui_Temp_data.set_text("t_data")
+# ui_Temp_data.set_text("t_data")
 ui_Temp_data.set_width(lv.SIZE_CONTENT)
 ui_Temp_data.set_height(lv.SIZE_CONTENT) 
 ui_Temp_data.set_x(-102)
 ui_Temp_data.set_y(-38)
 ui_Temp_data.set_align(lv.ALIGN.CENTER)
-ui_Temp_data.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 ui_Temp_data.set_style_text_color(lv.color_hex(0x0C00FF), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_Temp_data.set_style_text_opa(255, lv.PART.MAIN| lv.STATE.DEFAULT)
+ui_Temp_data.set_style_text_font(lv.font_montserrat_16, lv.PART.MAIN | lv.STATE.DEFAULT)
 
 ui_Humidity = lv.label(scrn)
 ui_Humidity.set_text("Humidity")
@@ -199,38 +208,29 @@ ui_Humidity.set_height(lv.SIZE_CONTENT)
 ui_Humidity.set_x(-104)
 ui_Humidity.set_y(39)
 ui_Humidity.set_align(lv.ALIGN.CENTER)
-ui_Humidity.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 ui_Humidity.set_style_text_color(lv.color_hex(0xFF0000), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_Humidity.set_style_text_opa(255, lv.PART.MAIN| lv.STATE.DEFAULT)
 
 ui_Humidity_data = lv.label(scrn)
-ui_Humidity_data.set_text("h_data")
+# ui_Humidity_data.set_text("h_data")
 ui_Humidity_data.set_width(lv.SIZE_CONTENT)
 ui_Humidity_data.set_height(lv.SIZE_CONTENT)
 ui_Humidity_data.set_x(-104)
 ui_Humidity_data.set_y(74)
 ui_Humidity_data.set_align(lv.ALIGN.CENTER)
-ui_Humidity_data.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 ui_Humidity_data.set_style_text_color(lv.color_hex(0xFF0000), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_Humidity_data.set_style_text_opa(255, lv.PART.MAIN| lv.STATE.DEFAULT)
+ui_Humidity_data.set_style_text_font(lv.font_montserrat_16, lv.PART.MAIN | lv.STATE.DEFAULT)
+
 
 ui_Time = lv.label(scrn)
-ui_Time.set_text("Time:")
+# ui_Time.set_text("Time:")
 ui_Time.set_width(lv.SIZE_CONTENT)
 ui_Time.set_height(lv.SIZE_CONTENT)
-ui_Time.set_x(-121)
+ui_Time.set_x(-76)
 ui_Time.set_y(-108)
 ui_Time.set_align(lv.ALIGN.CENTER)
-ui_Time.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
-ui_Time_data = lv.label(scrn)
-ui_Time_data.set_text("Time data")
-ui_Time_data.set_width(lv.SIZE_CONTENT)
-ui_Time_data.set_height(lv.SIZE_CONTENT)
-ui_Time_data.set_x(-60)
-ui_Time_data.set_y(-108)
-ui_Time_data.set_align(lv.ALIGN.CENTER)
-ui_Time_data.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_Wifi = lv.label(scrn)
 ui_Wifi.set_text("WiFi:")
@@ -239,52 +239,46 @@ ui_Wifi.set_height(lv.SIZE_CONTENT)
 ui_Wifi.set_x(-121)
 ui_Wifi.set_y(-91)
 ui_Wifi.set_align(lv.ALIGN.CENTER)
-ui_Wifi.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_connected = lv.label(scrn)
-ui_connected.set_text("connected")
+# ui_connected.set_text("connected")
 ui_connected.set_width(lv.SIZE_CONTENT)
 ui_connected.set_height(lv.SIZE_CONTENT)
 ui_connected.set_x(-60)
 ui_connected.set_y(-91)
 ui_connected.set_align(lv.ALIGN.CENTER)
-ui_connected.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_MQTT = lv.label(scrn)
 ui_MQTT.set_text("MQTT:")
 ui_MQTT.set_width(lv.SIZE_CONTENT)
 ui_MQTT.set_height(lv.SIZE_CONTENT)
 ui_MQTT.set_x(29)
-ui_MQTT.set_y(-108)
+ui_MQTT.set_y(-107)
 ui_MQTT.set_align(lv.ALIGN.CENTER)
-ui_MQTT.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_enabled = lv.label(scrn)
-ui_enabled.set_text("enabled")
+# ui_enabled.set_text("enabled")
 ui_enabled.set_width(lv.SIZE_CONTENT)
 ui_enabled.set_height(lv.SIZE_CONTENT)
-ui_enabled.set_x(91)
+ui_enabled.set_x(104)
 ui_enabled.set_y(-107)
 ui_enabled.set_align(lv.ALIGN.CENTER)
-ui_enabled.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_IP_ = lv.label(scrn)
 ui_IP_.set_text("IP:")
 ui_IP_.set_width(lv.SIZE_CONTENT)
 ui_IP_.set_height(lv.SIZE_CONTENT)
 ui_IP_.set_x(14)
-ui_IP_.set_y(-92)
+ui_IP_.set_y(-91)
 ui_IP_.set_align(lv.ALIGN.CENTER)
-ui_IP_.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_ip_data = lv.label(scrn)
-ui_ip_data.set_text("127.0.0.1")
+# ui_ip_data.set_text("127.0.0.1")
 ui_ip_data.set_width(lv.SIZE_CONTENT)
 ui_ip_data.set_height(lv.SIZE_CONTENT)
-ui_ip_data.set_x(53)
+ui_ip_data.set_x(88)
 ui_ip_data.set_y(-91)
 ui_ip_data.set_align(lv.ALIGN.CENTER)
-ui_ip_data.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_punkt1 = lv.obj(scrn)
 ui_punkt1.set_width(10)
@@ -292,7 +286,7 @@ ui_punkt1.set_height(10)
 ui_punkt1.set_x(-1)
 ui_punkt1.set_y(-108)
 ui_punkt1.set_align(lv.ALIGN.CENTER)
-ui_punkt1.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
+# ui_punkt1.set_style_bg_color(lv.color_make(0, 0, 255), lv.PART.MAIN | lv.STATE.DEFAULT)
 
 ui_punkt2 = lv.obj(scrn)
 ui_punkt2.set_width(10)
@@ -300,7 +294,7 @@ ui_punkt2.set_height(10)
 ui_punkt2.set_x(-1)
 ui_punkt2.set_y(-92)
 ui_punkt2.set_align(lv.ALIGN.CENTER)
-ui_punkt2.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
+#ui_punkt2.set_style_bg_color(lv.color_make(0, 255, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
 
 ui_punkt3 = lv.obj(scrn)
 ui_punkt3.set_width(10)
@@ -308,7 +302,7 @@ ui_punkt3.set_height(10)
 ui_punkt3.set_x(-150)
 ui_punkt3.set_y(-108)
 ui_punkt3.set_align(lv.ALIGN.CENTER)
-ui_punkt3.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
+# ui_punkt3.set_style_bg_color(lv.color_make(255, 0, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
 
 ui_punkt4 = lv.obj(scrn)
 ui_punkt4.set_width(10)
@@ -316,7 +310,8 @@ ui_punkt4.set_height(10)
 ui_punkt4.set_x(-150)
 ui_punkt4.set_y(-92)
 ui_punkt4.set_align(lv.ALIGN.CENTER)
-ui_punkt4.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
+# ui_punkt4.set_style_bg_color(lv.color_make(255, 0, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
+
 
 ui_frame_status = lv.obj(scrn)
 ui_frame_status.set_width(318)
@@ -344,28 +339,6 @@ ui_frame_humidity.set_y(71)
 ui_frame_humidity.set_align(lv.ALIGN.CENTER)
 ui_frame_humidity.set_style_bg_color(lv.color_hex(0xFFFFFF), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_frame_humidity.set_style_bg_opa(5, lv.PART.MAIN| lv.STATE.DEFAULT)
-
-
-
-
-# temperature_list = [0] * 10
-
-# ui_Chart1_series_1 = ui_Chart1.add_series(lv.color_hex(0xFF0000), lv.chart.AXIS.PRIMARY_Y)
-
-# ui_Chart1.set_ext_y_array(ui_Chart1_series_1, temperature_list)
-
-# ui_Chart1.set_style_outline_pad(max(50, 50, 50), lv.PART.MAIN | lv.STATE.DEFAULT)
-# ui_Chart1.set_style_outline_width(-1, lv.PART.MAIN | lv.STATE.DEFAULT)
-
-##################################################################
-# ui_Label1 = lv.label(scrn)
-# ui_Label1.set_text("Temperature")
-# ui_Label1.set_width(lv.SIZE_CONTENT)
-# ui_Label1.set_height(lv.SIZE_CONTENT)
-# ui_Label1.set_x(-92)
-# ui_Label1.set_y(-99)
-# ui_Label1.set_align(lv.ALIGN.CENTER)
-# ui_Label1.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 
 class WiFiManager:
@@ -415,25 +388,71 @@ class WiFiManager:
         return self.ssid, self.ip_address, self.status
 
 
-def time_now():
-    while True:
-        now = time.time()
-        seconds = int(now)
-        local_time = time.localtime(seconds)
-        hour = local_time[3]
-        minute = local_time[4]
-        second = local_time[5]
-        return "{:02d}:{:02d}:{:02d}".format(hour, minute, second)
+class Uhrzeit:
+    def __init__(self):
+        self.stelle_zeit_ein()
+        self.aktualisiere_zeit()
+
+    def stelle_zeit_ein(self):
+        print('Synchronisiere die Zeit über NTP...')
+        ntptime.host = 'de.pool.ntp.org'
+        ntptime.settime()
+        print('Zeit synchronisiert')
+
+    def aktualisiere_zeit(self):
+        """Holt die aktuelle Zeit, passt die Zeitzone an und setzt die Attribute."""
+        zeit_utc = utime.localtime()
+
+        offset = 1  # Normalzeit (MEZ)
+        if self.ist_sommerzeit(zeit_utc):
+            offset += 1
+
+        self.jahr, self.monat, self.tag, self.stunde, self.minute, self.sekunde, _, _ = zeit_utc
+        self.stunde = (self.stunde + offset) % 24
+
+    def ist_sommerzeit(self, zeit):
+        """Bestimmt, ob Sommerzeit (MESZ) angewendet wird."""
+        jahr, monat, tag = zeit[0], zeit[1], zeit[2]
+
+        if monat > 3 and monat < 10:
+            return True
+        elif monat == 3:
+            return tag >= 8
+        elif monat == 10:
+            return tag < 25
+        return False
+
+    def __str__(self):
+        return self.zeige_zeit()
+
+    def zeige_zeit(self):
+        """Gibt die Zeit als formatierte Zeichenkette zurück."""
+        return f"{self.tag:02d}.{self.monat:02d}.{self.jahr} {self.stunde:02d}:{self.minute:02d}:{self.sekunde:02d}"
+
+    async def tick(self):
+        """Aktualisiert die Zeit jede Sekunde."""
+        while True:
+            self.aktualisiere_zeit()
+            zeit = self.zeige_zeit()
+            ui_Time.set_text(zeit)
+            lv.task_handler()
+            await asyncio.sleep(1)
 
 
-def update_temperature_list(temp_list):
-    temperature = bmp280.temperature
+async def update_temperature_list(temp_list, humidity_list):
+    d.measure()
+    temperature = d.temperature()
+    humidity = d.humidity()
     temperature_int = int(round(temperature))
-    print("Current Temperature: {:.2f} C".format(temperature_int))
+    humidity_int = int(round(humidity))
 
     temp_list.append(temperature_int)
     if len(temp_list) > 10:
         temp_list.pop(0)
+
+    humidity_list.append(humidity_int)
+    if len(humidity_list) > 10:
+        humidity_list.pop(0)
 
 
 class MQTTSensorPublisher:
@@ -460,7 +479,7 @@ class MQTTSensorPublisher:
         self.client.set_callback(self.on_message)
 
     def publish_sensor_data(self):
-        sensor_data = self.sensor_callback()  # Hier wird die Sensorfunktion aufgerufen
+        sensor_data = self.sensor_callback()
         self.client.publish(self.topic, sensor_data)
         print("Sensor-Daten gesendet:", sensor_data)
 
@@ -476,24 +495,71 @@ class MQTTSensorPublisher:
         self.client.disconnect()
 
 
-def data_to_lvgl():
+async def data_to_lvgl_every_hours():
 
     while True:
-        update_temperature_list(temperature_list)
+        await update_temperature_list(temperature_list, humidity_list)
         print("Temperature List:", temperature_list)
-        #ui_Chart1.set_ext_y_array(ui_Chart1_series_1, temperature_list)
-        time.sleep(1)
+        print("Humidity List:", humidity_list)
+        ui_TemperatureChart.set_ext_y_array(ui_TemperatureChart_series_1, temperature_list)
+        ui_HumidityChart.set_ext_y_array(ui_HumidityChart_series_1, humidity_list)
+        ui_ip_data.set_text(ip_address)
+        ui_connected.set_text(status)
+        ui_enabled.set_text("enabled")
+        temperature = int(d.temperature())
+        ui_Temp_data.set_text(f"{temperature} °C")
+        humidity = int(d.humidity())
+        ui_Humidity_data.set_text(f"{humidity} %")
+
+        await asyncio.sleep(3)
+
+
+async def data_to_lvgl_every_second():
+
+    while True:
+        ui_punkt1.set_style_bg_color(lv.color_make(255, 0, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
+        ui_punkt2.set_style_bg_color(lv.color_make(0, 0, 255), lv.PART.MAIN | lv.STATE.DEFAULT)
+        ui_punkt3.set_style_bg_color(lv.color_make(0, 0, 255), lv.PART.MAIN | lv.STATE.DEFAULT)
+        ui_punkt4.set_style_bg_color(lv.color_make(255, 0, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
+        lv.task_handler()
+        await asyncio.sleep(1)
+        ui_punkt1.set_style_bg_color(lv.color_make(0, 0, 255), lv.PART.MAIN | lv.STATE.DEFAULT)
+        ui_punkt2.set_style_bg_color(lv.color_make(255, 0, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
+        ui_punkt3.set_style_bg_color(lv.color_make(255, 0, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
+        ui_punkt4.set_style_bg_color(lv.color_make(0, 0, 255), lv.PART.MAIN | lv.STATE.DEFAULT)
+        lv.task_handler()
+        await asyncio.sleep(1)
+
+
+
+async def main():
+    task1 = asyncio.create_task(data_to_lvgl_every_hours())
+    task2 = asyncio.create_task(data_to_lvgl_every_second())
+    uhr = Uhrzeit()
+    task3 = asyncio.create_task(uhr.tick())
+    # await asyncio.gather(task1)
+    await asyncio.gather(task1, task2, task3)
 
 
 if __name__ == "__main__":
 
+
     th = task_handler.TaskHandler()
 
-    i2c = SoftI2C(scl=Pin(38), sda=Pin(40))
-    bmp280 = BMP280(i2c)
+    d = dht.DHT11(machine.Pin(40))
+
+    d.measure()
+    temp_init = d.temperature()
+    humidity_init = d.humidity()
+    print("Initial Temperature: {:.2f} °C".format(temp_init))
+    print("Initial Humidity: {:.2f} %".format(humidity_init))
 
     wifi_manager = WiFiManager('idontknow', 'dumdidum', 'temp_humidity', '12345678')
     ssid, ip_address, status = wifi_manager.configure_wifi()
     print(f'SSID: {ssid}, IP-Adresse: {ip_address}, Status: {status}')
+    uhr = Uhrzeit()
+    print(uhr)
     temperature_list = [0] * 10
-    data_to_lvgl()
+    humidity_list = [0] * 10
+
+    asyncio.run(main())
