@@ -49,11 +49,11 @@ dispp = lv.display_get_default()
 theme = lv.theme_default_init(dispp, lv.palette_main(lv.PALETTE.BLUE), lv.palette_main(lv.PALETTE.RED), True, lv.font_default())
 dispp.set_theme(theme)
 
-
+#################################### temperature chart ###########################################
 ui_TemperatureChart = lv.chart(scrn)
-ui_TemperatureChart.set_width(169)
+ui_TemperatureChart.set_width(184)
 ui_TemperatureChart.set_height(63)
-ui_TemperatureChart.set_x(58)
+ui_TemperatureChart.set_x(60)
 ui_TemperatureChart.set_y(-41)
 ui_TemperatureChart.set_align(lv.ALIGN.CENTER)
 ui_TemperatureChart.add_flag(lv.obj.FLAG.OVERFLOW_VISIBLE)
@@ -82,7 +82,7 @@ ui_TemperatureChart_Yaxis1.set_mode(lv.scale.MODE.VERTICAL_LEFT)
 ui_TemperatureChart_Yaxis1.set_size(50, lv.pct(100))
 ui_TemperatureChart_Yaxis1.set_align(lv.ALIGN.LEFT_MID)
 ui_TemperatureChart_Yaxis1.set_x(-50 - ui_TemperatureChart.get_style_pad_left(lv.PART.MAIN) - ui_TemperatureChart.get_style_border_width(lv.PART.MAIN) + 2)
-ui_TemperatureChart_Yaxis1.set_range(10, 30)
+# ui_TemperatureChart_Yaxis1.set_range(10, 30)
 ui_TemperatureChart_Yaxis1.set_total_tick_count((3 - 1 if 3 > 0 else 0) * 5 + 1)
 ui_TemperatureChart_Yaxis1.set_major_tick_every(5 if 5 >= 1 else 1)
 ui_TemperatureChart_Yaxis1.set_style_line_width(0, lv.PART.MAIN)
@@ -91,32 +91,19 @@ ui_TemperatureChart_Yaxis1.set_style_line_width(1, lv.PART.INDICATOR)
 ui_TemperatureChart_Yaxis1.set_style_length(10, lv.PART.INDICATOR)
 ui_TemperatureChart_Yaxis1.set_style_length(5, lv.PART.ITEMS)
 
-
-ui_TemperatureChart_Yaxis2 = lv.scale(ui_TemperatureChart)
-ui_TemperatureChart_Yaxis2.set_mode(lv.scale.MODE.VERTICAL_RIGHT)
-ui_TemperatureChart_Yaxis2.set_size(50, lv.pct(100))
-ui_TemperatureChart_Yaxis2.set_align(lv.ALIGN.RIGHT_MID)
-ui_TemperatureChart_Yaxis2.set_x(50 + ui_TemperatureChart.get_style_pad_right(lv.PART.MAIN) + ui_TemperatureChart.get_style_border_width(lv.PART.MAIN) + 1)
-ui_TemperatureChart_Yaxis2.set_range(10, 30)
-ui_TemperatureChart_Yaxis2.set_total_tick_count((3 - 1 if 3 > 0 else 0) * 5 + 1)
-ui_TemperatureChart_Yaxis2.set_major_tick_every(5 if 5 >= 1 else 1)
-ui_TemperatureChart_Yaxis2.set_style_line_width(0, lv.PART.MAIN)
-ui_TemperatureChart_Yaxis2.set_style_line_width(1, lv.PART.ITEMS)
-ui_TemperatureChart_Yaxis2.set_style_line_width(1, lv.PART.INDICATOR)
-ui_TemperatureChart_Yaxis2.set_style_length(10, lv.PART.INDICATOR)
-ui_TemperatureChart_Yaxis2.set_style_length(5, lv.PART.ITEMS)
-ui_TemperatureChart_Yaxis2.set_label_show(False)
 ui_TemperatureChart_series_1 = ui_TemperatureChart.add_series(lv.color_hex(0x0C00FF), lv.chart.AXIS.PRIMARY_Y)
-# ui_TemperatureChart_series_1_array = [0, 10, 20, 10, 20, 20, 20, 20, 10, 0]
-# ui_TemperatureChart.set_ext_y_array(ui_TemperatureChart_series_1, ui_TemperatureChart_series_1_array)
+
 
 ui_TemperatureChart.set_style_outline_pad(max(50, 50, 50), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_TemperatureChart.set_style_outline_width(-1, lv.PART.MAIN | lv.STATE.DEFAULT)
 
 ui_TemperatureChart.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
+#################################### temperature chart END ####################################
+#################################### humidity chart ###########################################
+
 ui_HumidityChart = lv.chart(scrn)
-ui_HumidityChart.set_width(170)
+ui_HumidityChart.set_width(184)
 ui_HumidityChart.set_height(63)
 ui_HumidityChart.set_x(60)
 ui_HumidityChart.set_y(60)
@@ -125,8 +112,6 @@ ui_HumidityChart.add_flag(lv.obj.FLAG.OVERFLOW_VISIBLE)
 ui_HumidityChart.set_type(lv.chart.TYPE.LINE)
 ui_HumidityChart.set_range(lv.chart.AXIS.PRIMARY_Y, 10, 30)
 ui_HumidityChart.set_range(lv.chart.AXIS.SECONDARY_Y, 10, 30)
-
-ui_HumidityChart.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
 ui_HumidityChart_Xaxis = lv.scale(ui_HumidityChart)
 ui_HumidityChart_Xaxis.set_mode(lv.scale.MODE.HORIZONTAL_BOTTOM)
@@ -147,7 +132,7 @@ ui_HumidityChart_Yaxis1.set_mode(lv.scale.MODE.VERTICAL_LEFT)
 ui_HumidityChart_Yaxis1.set_size(50, lv.pct(100))
 ui_HumidityChart_Yaxis1.set_align(lv.ALIGN.LEFT_MID)
 ui_HumidityChart_Yaxis1.set_x(-50 - ui_HumidityChart.get_style_pad_left(lv.PART.MAIN) - ui_HumidityChart.get_style_border_width(lv.PART.MAIN) + 2)
-ui_HumidityChart_Yaxis1.set_range(10, 30)
+# ui_HumidityChart_Yaxis1.set_range(10, 30)
 ui_HumidityChart_Yaxis1.set_total_tick_count((3 - 1 if 3 > 0 else 0) * 5 + 1)
 ui_HumidityChart_Yaxis1.set_major_tick_every(5 if 5 >= 1 else 1)
 ui_HumidityChart_Yaxis1.set_style_line_width(0, lv.PART.MAIN)
@@ -156,29 +141,15 @@ ui_HumidityChart_Yaxis1.set_style_line_width(1, lv.PART.INDICATOR)
 ui_HumidityChart_Yaxis1.set_style_length(10, lv.PART.INDICATOR)
 ui_HumidityChart_Yaxis1.set_style_length(5, lv.PART.ITEMS)
 
-ui_HumidityChart_Yaxis2 = lv.scale(ui_HumidityChart)
-ui_HumidityChart_Yaxis2.set_mode(lv.scale.MODE.VERTICAL_RIGHT)
-ui_HumidityChart_Yaxis2.set_size(50, lv.pct(100))
-ui_HumidityChart_Yaxis2.set_align(lv.ALIGN.RIGHT_MID)
-ui_HumidityChart_Yaxis2.set_x(50 + ui_HumidityChart.get_style_pad_right(lv.PART.MAIN) + ui_HumidityChart.get_style_border_width(lv.PART.MAIN) + 1)
-ui_HumidityChart_Yaxis2.set_range(10, 30)
-ui_HumidityChart_Yaxis2.set_total_tick_count((3 - 1 if 3 > 0 else 0) * 5 + 1)
-ui_HumidityChart_Yaxis2.set_major_tick_every(5 if 5 >= 1 else 1)
-ui_HumidityChart_Yaxis2.set_style_line_width(0, lv.PART.MAIN)
-ui_HumidityChart_Yaxis2.set_style_line_width(1, lv.PART.ITEMS)
-ui_HumidityChart_Yaxis2.set_style_line_width(1, lv.PART.INDICATOR)
-ui_HumidityChart_Yaxis2.set_style_length(10, lv.PART.INDICATOR)
-ui_HumidityChart_Yaxis2.set_style_length(5, lv.PART.ITEMS)
-ui_HumidityChart_Yaxis2.set_label_show(False)
-
 ui_HumidityChart_series_1 = ui_HumidityChart.add_series(lv.color_hex(0xFF0000), lv.chart.AXIS.PRIMARY_Y)
-# ui_HumidityChart_series_1_array = [0, 10, 20, 10, 20, 20, 20, 20, 10, 0]
-# ui_HumidityChart.set_ext_y_array(ui_HumidityChart_series_1, ui_HumidityChart_series_1_array)
 
 
 ui_HumidityChart.set_style_outline_pad(max(50, 50, 50), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_HumidityChart.set_style_outline_width(-1, lv.PART.MAIN | lv.STATE.DEFAULT)
 
+ui_HumidityChart.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
+
+#################################### humidity chart END ###########################################
 
 ui_Temperature = lv.label(scrn)
 ui_Temperature.set_text("Temperature")
@@ -501,8 +472,24 @@ async def data_to_lvgl_every_hours():
         await update_temperature_list(temperature_list, humidity_list)
         print("Temperature List:", temperature_list)
         print("Humidity List:", humidity_list)
+
+        # ################# temp chart #########################
+        range_down_temp = min(temperature_list) - 1
+        range_up_temp = max(temperature_list) + 1
         ui_TemperatureChart.set_ext_y_array(ui_TemperatureChart_series_1, temperature_list)
+
+        ui_TemperatureChart_Yaxis1.set_range(range_down_temp, range_up_temp)
+
+        # ################# temp chart END #####################
+        # ################# humidtiy chart #####################
+        range_down_humi = min(humidity_list) - 1
+        range_up_humi = max(humidity_list) + 1
         ui_HumidityChart.set_ext_y_array(ui_HumidityChart_series_1, humidity_list)
+
+        ui_HumidityChart_Yaxis1.set_range(range_down_humi, range_up_humi)
+
+        # ################# humidtiy chart END #################
+
         ui_ip_data.set_text(ip_address)
         ui_connected.set_text(status)
         ui_enabled.set_text("enabled")
