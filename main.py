@@ -67,7 +67,7 @@ ui_TemperatureChart_Xaxis.set_mode(lv.scale.MODE.HORIZONTAL_BOTTOM)
 ui_TemperatureChart_Xaxis.set_size(lv.pct(100), 50)
 ui_TemperatureChart_Xaxis.set_align(lv.ALIGN.BOTTOM_MID)
 ui_TemperatureChart_Xaxis.set_y(50 + ui_TemperatureChart.get_style_pad_bottom(lv.PART.MAIN) + ui_TemperatureChart.get_style_border_width(lv.PART.MAIN))
-ui_TemperatureChart_Xaxis.set_range(0, 4)
+# ui_TemperatureChart_Xaxis.set_range(0, 4)
 ui_TemperatureChart_Xaxis.set_total_tick_count(5)
 ui_TemperatureChart_Xaxis.set_major_tick_every(1)
 ui_TemperatureChart_Xaxis.set_style_line_width(0, lv.PART.MAIN)
@@ -118,7 +118,7 @@ ui_HumidityChart_Xaxis.set_mode(lv.scale.MODE.HORIZONTAL_BOTTOM)
 ui_HumidityChart_Xaxis.set_size(lv.pct(100), 50)
 ui_HumidityChart_Xaxis.set_align(lv.ALIGN.BOTTOM_MID)
 ui_HumidityChart_Xaxis.set_y(50 + ui_HumidityChart.get_style_pad_bottom(lv.PART.MAIN) + ui_HumidityChart.get_style_border_width(lv.PART.MAIN))
-ui_HumidityChart_Xaxis.set_range(0, 4)
+# ui_HumidityChart_Xaxis.set_range(0, 4)
 ui_HumidityChart_Xaxis.set_total_tick_count(5)
 ui_HumidityChart_Xaxis.set_major_tick_every(1)
 ui_HumidityChart_Xaxis.set_style_line_width(0, lv.PART.MAIN)
@@ -256,7 +256,7 @@ ui_punkt1 = lv.obj(scrn)
 ui_punkt1.set_width(10)
 ui_punkt1.set_height(10)
 ui_punkt1.set_x(-1)
-ui_punkt1.set_y(-108)
+ui_punkt1.set_y(-107)
 ui_punkt1.set_align(lv.ALIGN.CENTER)
 # ui_punkt1.set_style_bg_color(lv.color_make(0, 0, 255), lv.PART.MAIN | lv.STATE.DEFAULT)
 
@@ -264,7 +264,7 @@ ui_punkt2 = lv.obj(scrn)
 ui_punkt2.set_width(10)
 ui_punkt2.set_height(10)
 ui_punkt2.set_x(-1)
-ui_punkt2.set_y(-92)
+ui_punkt2.set_y(-91)
 ui_punkt2.set_align(lv.ALIGN.CENTER)
 # ui_punkt2.set_style_bg_color(lv.color_make(0, 255, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
 
@@ -272,7 +272,7 @@ ui_punkt3 = lv.obj(scrn)
 ui_punkt3.set_width(10)
 ui_punkt3.set_height(10)
 ui_punkt3.set_x(-150)
-ui_punkt3.set_y(-108)
+ui_punkt3.set_y(-107)
 ui_punkt3.set_align(lv.ALIGN.CENTER)
 # ui_punkt3.set_style_bg_color(lv.color_make(255, 0, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
 
@@ -280,7 +280,7 @@ ui_punkt4 = lv.obj(scrn)
 ui_punkt4.set_width(10)
 ui_punkt4.set_height(10)
 ui_punkt4.set_x(-150)
-ui_punkt4.set_y(-92)
+ui_punkt4.set_y(-91)
 ui_punkt4.set_align(lv.ALIGN.CENTER)
 # ui_punkt4.set_style_bg_color(lv.color_make(255, 0, 0), lv.PART.MAIN | lv.STATE.DEFAULT)
 
@@ -362,6 +362,7 @@ class WiFiManager:
 
 class Uhrzeit:
     def __init__(self):
+        self.sekunden_liste = [0] * 5
         self.stelle_zeit_ein()
         self.aktualisiere_zeit()
 
@@ -394,6 +395,12 @@ class Uhrzeit:
             return tag < 25
         return False
 
+    def update_sekunden_liste(self):
+        """Aktualisiert die Liste der letzten 5 Sekunden."""
+        self.sekunden_liste.append(self.sekunde)
+        if len(self.sekunden_liste) > 5:
+            self.sekunden_liste.pop(0)
+
     def __str__(self):
         return self.zeige_zeit()
 
@@ -406,7 +413,10 @@ class Uhrzeit:
         while True:
             self.aktualisiere_zeit()
             zeit = self.zeige_zeit()
+            sekunden = self.update_sekunden_liste()
             ui_Time.set_text(zeit)
+            ui_HumidityChart_Xaxis.set_range(sekunden)
+            ui_TemperatureChart_Xaxis.set_range(sekunden)
             lv.task_handler()
             await asyncio.sleep(1)
 
