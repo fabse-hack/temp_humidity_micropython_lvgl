@@ -1,4 +1,5 @@
 # Temperature and Humidity with Micropython and LVGL
+  !!! STILL UNDER DEVELOPMENT !!!  
   
 **Content:**  
 [Hardware](#hardware)  
@@ -43,7 +44,7 @@ The project uses asyncio for asynchronous programming. It includes:
 - Main execution block
 - (global) variables
 
-# TODO:
+# ToDo:
 - Code is runnable but not yet finished
 - 3D printing a case
 - Creating a YouTube video tutorial
