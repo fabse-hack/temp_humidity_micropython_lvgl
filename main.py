@@ -68,12 +68,12 @@ ui_TemperatureChart_Xaxis.set_size(lv.pct(100), 50)
 ui_TemperatureChart_Xaxis.set_align(lv.ALIGN.BOTTOM_MID)
 ui_TemperatureChart_Xaxis.set_y(50 + ui_TemperatureChart.get_style_pad_bottom(lv.PART.MAIN) + ui_TemperatureChart.get_style_border_width(lv.PART.MAIN))
 # ui_TemperatureChart_Xaxis.set_range(0, 4)
-ui_TemperatureChart_Xaxis.set_total_tick_count(5)
-ui_TemperatureChart_Xaxis.set_major_tick_every(1)
+ui_TemperatureChart_Xaxis.set_total_tick_count(10)
+ui_TemperatureChart_Xaxis.set_major_tick_every(2)
 ui_TemperatureChart_Xaxis.set_style_line_width(0, lv.PART.MAIN)
 ui_TemperatureChart_Xaxis.set_style_line_width(1, lv.PART.ITEMS)
 ui_TemperatureChart_Xaxis.set_style_line_width(1, lv.PART.INDICATOR)
-ui_TemperatureChart_Xaxis.set_style_length(10, lv.PART.INDICATOR)
+ui_TemperatureChart_Xaxis.set_style_length(8, lv.PART.INDICATOR)
 ui_TemperatureChart_Xaxis.set_style_length(5, lv.PART.ITEMS)
 
 
@@ -119,8 +119,8 @@ ui_HumidityChart_Xaxis.set_size(lv.pct(100), 50)
 ui_HumidityChart_Xaxis.set_align(lv.ALIGN.BOTTOM_MID)
 ui_HumidityChart_Xaxis.set_y(50 + ui_HumidityChart.get_style_pad_bottom(lv.PART.MAIN) + ui_HumidityChart.get_style_border_width(lv.PART.MAIN))
 # ui_HumidityChart_Xaxis.set_range(0, 4)
-ui_HumidityChart_Xaxis.set_total_tick_count(5)
-ui_HumidityChart_Xaxis.set_major_tick_every(1)
+ui_HumidityChart_Xaxis.set_total_tick_count(10)
+ui_HumidityChart_Xaxis.set_major_tick_every(2)
 ui_HumidityChart_Xaxis.set_style_line_width(0, lv.PART.MAIN)
 ui_HumidityChart_Xaxis.set_style_line_width(1, lv.PART.ITEMS)
 ui_HumidityChart_Xaxis.set_style_line_width(1, lv.PART.INDICATOR)
@@ -362,7 +362,7 @@ class WiFiManager:
 
 class Uhrzeit:
     def __init__(self):
-        self.sekunden_liste = [0] * 5
+        self.sekunden_liste = [0]
         self.stelle_zeit_ein()
         self.aktualisiere_zeit()
 
@@ -396,27 +396,22 @@ class Uhrzeit:
         return False
 
     def update_sekunden_liste(self):
-        """Aktualisiert die Liste der letzten 5 Sekunden."""
         self.sekunden_liste.append(self.sekunde)
-        if len(self.sekunden_liste) > 5:
+        if len(self.sekunden_liste) > 8:
             self.sekunden_liste.pop(0)
+        return self.sekunden_liste
 
     def __str__(self):
         return self.zeige_zeit()
 
     def zeige_zeit(self):
-        """Gibt die Zeit als formatierte Zeichenkette zurück."""
         return f"{self.tag:02d}.{self.monat:02d}.{self.jahr} {self.stunde:02d}:{self.minute:02d}:{self.sekunde:02d}"
 
     async def tick(self):
-        """Aktualisiert die Zeit jede Sekunde."""
         while True:
             self.aktualisiere_zeit()
             zeit = self.zeige_zeit()
-            sekunden = self.update_sekunden_liste()
             ui_Time.set_text(zeit)
-            ui_HumidityChart_Xaxis.set_range(sekunden)
-            ui_TemperatureChart_Xaxis.set_range(sekunden)
             lv.task_handler()
             await asyncio.sleep(1)
 
@@ -448,38 +443,32 @@ class MQTTSensorPublisher:
         self.client.set_callback(self.on_message)
         self.sensor_callback = sensor_callback
 
-    def on_connect(self, client):
-        print("Verbunden mit dem MQTT-Broker")
-        client.subscribe(self.topic)
-
     def on_message(self, topic, msg):
         print("Empfangene Daten:", msg)
 
-    def connect(self):
+    async def connect(self):
         self.client.connect()
         self.client.set_last_will(self.topic, "Disconnected")
         self.client.set_callback(self.on_message)
 
-    def publish_sensor_data(self):
-        sensor_data = self.sensor_callback()
+    async def publish_sensor_data(self):
+        sensor_data = await self.sensor_callback()
         self.client.publish(self.topic, sensor_data)
         print("Sensor-Daten gesendet:", sensor_data)
 
-    def run(self):
+    async def run(self):
+        await self.connect()
         while True:
-            try:
-                self.publish_sensor_data()
-                time.sleep(10)
-                self.client.wait_msg()
-            except KeyboardInterrupt:
-                break
-
-        self.client.disconnect()
+            await self.publish_sensor_data()
+            # await asyncio.sleep(10)
+            # self.client.disconnect()
 
 
 async def data_to_lvgl_every_hours():
 
+    get_seconds = Uhrzeit()
     while True:
+        get_seconds.aktualisiere_zeit()
         await update_temperature_list(temperature_list, humidity_list)
         print("Temperature List:", temperature_list)
         print("Humidity List:", humidity_list)
@@ -524,6 +513,14 @@ async def data_to_lvgl_every_hours():
 
         # ################# humidtiy chart END #################
 
+        sekunden_liste = get_seconds.update_sekunden_liste()
+
+        sekunden_min = sekunden_liste[0]
+        sekunden_max = sekunden_liste[-1]
+
+        ui_HumidityChart_Xaxis.set_range(sekunden_min, sekunden_max)
+        ui_TemperatureChart_Xaxis.set_range(sekunden_min, sekunden_max)
+
         ui_ip_data.set_text(ip_address)
         ui_connected.set_text(status)
         ui_enabled.set_text("enabled")
@@ -533,6 +530,12 @@ async def data_to_lvgl_every_hours():
         ui_Humidity_data.set_text(f"{humidity} %")
 
         await asyncio.sleep(3)
+
+
+async def sensor_callback():
+    while True:
+        await asyncio.sleep(3)
+        return "23.5"
 
 
 async def data_to_lvgl_every_second():
@@ -558,8 +561,8 @@ async def main():
     task2 = asyncio.create_task(data_to_lvgl_every_second())
     uhr = Uhrzeit()
     task3 = asyncio.create_task(uhr.tick())
-    # await asyncio.gather(task1)
-    await asyncio.gather(task1, task2, task3)
+    task4 = asyncio.create_task(mqtt_publisher.run())
+    await asyncio.gather(task1, task2, task3, task4)
 
 
 if __name__ == "__main__":
@@ -578,6 +581,19 @@ if __name__ == "__main__":
     wifi_manager = WiFiManager('idontknow', 'dumdidum', 'temp_humidity', '12345678')
     ssid, ip_address, status = wifi_manager.configure_wifi()
     print(f'SSID: {ssid}, IP-Adresse: {ip_address}, Status: {status}')
+
+    mqtt_publisher = MQTTSensorPublisher(
+                                        broker_address="xxx.xxx.xxx.xxx",
+                                        port=1883,
+                                        topic="sensor/temperature",
+                                        username="xxxxxx",
+                                        password="xxxxxx",
+                                        sensor_callback=sensor_callback
+                                        )
+
+    mqtt_publisher.connect()
+    
+    
     uhr = Uhrzeit()
     print(uhr)
     temperature_list = [25] * 10
