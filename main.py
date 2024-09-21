@@ -583,11 +583,11 @@ if __name__ == "__main__":
     print(f'SSID: {ssid}, IP-Adresse: {ip_address}, Status: {status}')
 
     mqtt_publisher = MQTTSensorPublisher(
-                                        broker_address="xxx.xxx.xxx.xxx",
+                                        broker_address="192.168.178.103",
                                         port=1883,
                                         topic="sensor/temperature",
-                                        username="xxxxxx",
-                                        password="xxxxxx",
+                                        username="homeassistant",
+                                        password="dumdidum",
                                         sensor_callback=sensor_callback
                                         )
 
