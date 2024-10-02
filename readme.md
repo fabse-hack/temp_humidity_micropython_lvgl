@@ -2,14 +2,16 @@
   !!! STILL UNDER DEVELOPMENT !!!  
   
 **Content:**  
-[Hardware](#hardware)  
-[Code](#Code)  
-[TODO](#todo)
+[hardware](#hardware)  
+[code](#code)  
+[CAD_case](#CAD_case)  
+[ToDo](#ToDo)
   
 # Hardware
 - ili9341  
 - lolin esp32_s2_mini  
 - DHT11  
+- Neopixel LED (P9823)
   
   
 ![image](ili9341+esp32_s2_mini.jpg)
@@ -36,15 +38,20 @@ I downloaded Squareline Studio https://squareline.io/. Although it's not recomme
 The project uses asyncio for asynchronous programming. It includes:
 
 - An LVGL-based UI
-- A Clock class
+- A German Time class
 - An MQTT class
 - An async def data_to_lvgl_every_hour function
 - An async def data_to_lvgl_every_second function
 - asyncio.gather for running multiple coroutines concurrently
 - Main execution block
 - (global) variables
+- Neopixel LED for lightable status
+
+# CAD_case
+
+*.par and *.stl file from the case
+
 
 # ToDo:
-- Code is runnable but not yet finished
-- 3D printing a case
+- Code is runnable but not yet finished (95%)
 - Creating a YouTube video tutorial

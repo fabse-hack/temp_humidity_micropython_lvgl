@@ -555,7 +555,7 @@ if __name__ == "__main__":
     print("initial temperature: {:.2f} °C".format(temp_init))
     print("initial humidity: {:.2f} %".format(humidity_init))
 
-    wifi_manager = WiFiManager('idontknow', 'xxxxxxx', 'temp_humidity', '12345678')
+    wifi_manager = WiFiManager('idontknow', 'xxxxxx', 'temp_humidity', '12345678')
     ssid, ip_address, status = wifi_manager.configure_wifi()
     print(f'SSID: {ssid}, IP: {ip_address}, Status: {status}')
     led.fill((255, 0, 0)).write()
@@ -565,7 +565,7 @@ if __name__ == "__main__":
                                         port=1883,
                                         topic="humi_temp",
                                         username="homeassistant",
-                                        password="xxxxxx",
+                                        password="xxxxx",
                                         sensor_callback=sensor_callback
                                         )
 
