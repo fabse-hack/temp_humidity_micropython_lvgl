@@ -32,9 +32,7 @@ display = ili9341.ILI9341(
     display_height=320,
     reset_pin=4,
     reset_state=ili9341.STATE_LOW,
-    # backlight_pin=40,
     color_space=lv.COLOR_FORMAT.RGB565,
-    # color_byte_order=ili9341.BYTE_ORDER_BGR,
     rgb565_byte_swap=True
 )
 
@@ -58,9 +56,6 @@ ui_TemperatureChart.set_y(-41)
 ui_TemperatureChart.set_align(lv.ALIGN.CENTER)
 ui_TemperatureChart.add_flag(lv.obj.FLAG.OVERFLOW_VISIBLE)
 ui_TemperatureChart.set_type(lv.chart.TYPE.LINE)
-# ui_TemperatureChart.set_range(lv.chart.AXIS.PRIMARY_Y, 10, 30)
-# ui_TemperatureChart.set_range(lv.chart.AXIS.SECONDARY_Y, 10, 30)
-
 
 ui_TemperatureChart_Xaxis = lv.scale(ui_TemperatureChart)
 ui_TemperatureChart_Xaxis.set_mode(lv.scale.MODE.HORIZONTAL_BOTTOM)
@@ -76,7 +71,6 @@ ui_TemperatureChart_Xaxis.set_style_line_width(1, lv.PART.INDICATOR)
 ui_TemperatureChart_Xaxis.set_style_length(8, lv.PART.INDICATOR)
 ui_TemperatureChart_Xaxis.set_style_length(5, lv.PART.ITEMS)
 
-
 ui_TemperatureChart_Yaxis1 = lv.scale(ui_TemperatureChart)
 ui_TemperatureChart_Yaxis1.set_mode(lv.scale.MODE.VERTICAL_LEFT)
 ui_TemperatureChart_Yaxis1.set_size(50, lv.pct(100))
@@ -90,7 +84,6 @@ ui_TemperatureChart_Yaxis1.set_style_length(10, lv.PART.INDICATOR)
 ui_TemperatureChart_Yaxis1.set_style_length(5, lv.PART.ITEMS)
 
 ui_TemperatureChart_series_1 = ui_TemperatureChart.add_series(lv.color_hex(0x0C00FF), lv.chart.AXIS.PRIMARY_Y)
-
 
 ui_TemperatureChart.set_style_outline_pad(max(50, 50, 50), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_TemperatureChart.set_style_outline_width(-1, lv.PART.MAIN | lv.STATE.DEFAULT)
@@ -136,7 +129,6 @@ ui_HumidityChart_Yaxis1.set_style_length(10, lv.PART.INDICATOR)
 ui_HumidityChart_Yaxis1.set_style_length(5, lv.PART.ITEMS)
 
 ui_HumidityChart_series_1 = ui_HumidityChart.add_series(lv.color_hex(0xFF0000), lv.chart.AXIS.PRIMARY_Y)
-
 
 ui_HumidityChart.set_style_outline_pad(max(50, 50, 50), lv.PART.MAIN | lv.STATE.DEFAULT)
 ui_HumidityChart.set_style_outline_width(-1, lv.PART.MAIN | lv.STATE.DEFAULT)
@@ -185,14 +177,12 @@ ui_Humidity_data.set_style_text_color(lv.color_hex(0xFF0000), lv.PART.MAIN | lv.
 ui_Humidity_data.set_style_text_opa(255, lv.PART.MAIN| lv.STATE.DEFAULT)
 ui_Humidity_data.set_style_text_font(lv.font_montserrat_16, lv.PART.MAIN | lv.STATE.DEFAULT)
 
-
 ui_Time = lv.label(scrn)
 ui_Time.set_width(lv.SIZE_CONTENT)
 ui_Time.set_height(lv.SIZE_CONTENT)
 ui_Time.set_x(-76)
 ui_Time.set_y(-108)
 ui_Time.set_align(lv.ALIGN.CENTER)
-
 
 ui_Wifi = lv.label(scrn)
 ui_Wifi.set_text("WiFi:")
@@ -310,24 +300,24 @@ class WiFiManager:
         wlan.active(True)
 
         if not wlan.isconnected():
-            print('Verbindung zum WLAN herstellen...')
+            print("testing connection to wifi")
             wlan.connect(self.wifi_ssid, self.wifi_password)
             while not wlan.isconnected():
                 pass
-        print('Verbunden mit:', self.wifi_ssid)
+        print("connected with:", self.wifi_ssid)
         self.ssid = self.wifi_ssid
         self.ip_address = wlan.ifconfig()[0]
-        print('IP-Adresse:', self.ip_address)
+        print("IP-Adresse:", self.ip_address)
         self.status = "connected"
 
     def create_access_point(self):
         ap = network.WLAN(network.AP_IF)
         ap.active(True)
         ap.config(essid=self.ap_ssid, password=self.ap_password)
-        print('Access Point erstellt:')
-        print('SSID:', self.ap_ssid)
-        print('Passwort:', self.ap_password)
-        print('IP-Adresse:', ap.ifconfig()[0])
+        print("access point created:")
+        print("SSID:", self.ap_ssid)
+        print("Passwort:", self.ap_password)
+        print("IP-Adresse:", ap.ifconfig()[0])
         self.ssid = self.ap_ssid
         self.ip_address = ap.ifconfig()[0]
         self.status = "access point"
@@ -336,37 +326,35 @@ class WiFiManager:
         try:
             self.connect_to_wifi()
         except BaseException:
-            print('Verbindung zum WLAN nicht möglich. Erstelle Access Point...')
+            print("cannot connect to wifi - create access point ...")
             self.create_access_point()
 
         return self.ssid, self.ip_address, self.status
 
 
-class Uhrzeit:
+class German_time:
     def __init__(self):
         self.sekunden_liste = [0]
         self.stelle_zeit_ein()
         self.aktualisiere_zeit()
 
     def stelle_zeit_ein(self):
-        print('Synchronisiere die Zeit über NTP...')
-        ntptime.host = 'de.pool.ntp.org'
+        print("syncronize time over ntp...")
+        ntptime.host = "de.pool.ntp.org"
         ntptime.settime()
-        print('Zeit synchronisiert')
+        print("time synchronized")
 
     def aktualisiere_zeit(self):
-        """Holt die aktuelle Zeit, passt die Zeitzone an und setzt die Attribute."""
         zeit_utc = utime.localtime()
 
         offset = 1  # Normalzeit (MEZ)
-        if self.ist_sommerzeit(zeit_utc):
+        if self.is_summertime(zeit_utc):
             offset += 1
 
         self.jahr, self.monat, self.tag, self.stunde, self.minute, self.sekunde, _, _ = zeit_utc
         self.stunde = (self.stunde + offset) % 24
 
-    def ist_sommerzeit(self, zeit):
-        """Bestimmt, ob Sommerzeit (MESZ) angewendet wird."""
+    def is_summertime(self, zeit):
         monat, tag = zeit[1], zeit[2]
 
         if monat > 3 and monat < 10:
@@ -426,17 +414,17 @@ class MQTTSensorPublisher:
         self.sensor_callback = sensor_callback
 
     def on_message(self, topic, msg):
-        print("Empfangene Daten:", msg)
+        print("recieved data:", msg)
 
     async def connect(self):
         self.client.connect()
-        self.client.set_last_will(self.topic, "Disconnected")
+        self.client.set_last_will(self.topic, "disconnected")
         self.client.set_callback(self.on_message)
 
     async def publish_sensor_data(self):
         sensor_data = await self.sensor_callback()
         self.client.publish(self.topic, sensor_data)
-        print("Sensor-Daten gesendet:", sensor_data)
+        print("sensor data send:", sensor_data)
 
     async def run(self):
         await self.connect()
@@ -448,12 +436,12 @@ class MQTTSensorPublisher:
 
 async def data_to_lvgl_every_hours():
 
-    get_seconds = Uhrzeit()
+    get_seconds = German_time()
     while True:
         get_seconds.aktualisiere_zeit()
         await update_temperature_list(temperature_list, humidity_list)
-        print("Temperature List:", temperature_list)
-        print("Humidity List:", humidity_list)
+        print("......temperature list:", temperature_list)
+        print("......humidity list:", humidity_list)
 
         # ################# temp chart #########################
         range_down_temp = min(temperature_list) - 1
@@ -510,7 +498,7 @@ async def data_to_lvgl_every_hours():
         ui_Temp_data.set_text(f"{temperature} °C")
         humidity = int(d.humidity())
         ui_Humidity_data.set_text(f"{humidity} %")
-        
+
         led.fill((0, 0, 255)).write()
 
         await asyncio.sleep(3)
@@ -546,7 +534,7 @@ async def data_to_lvgl_every_second():
 async def main():
     task1 = asyncio.create_task(data_to_lvgl_every_hours())
     task2 = asyncio.create_task(data_to_lvgl_every_second())
-    uhr = Uhrzeit()
+    uhr = German_time()
     task3 = asyncio.create_task(uhr.tick())
     task4 = asyncio.create_task(mqtt_publisher.run())
     await asyncio.gather(task1, task2, task3, task4)
@@ -564,26 +552,26 @@ if __name__ == "__main__":
     d.measure()
     temp_init = d.temperature()
     humidity_init = d.humidity()
-    print("Initial Temperature: {:.2f} °C".format(temp_init))
-    print("Initial Humidity: {:.2f} %".format(humidity_init))
+    print("initial temperature: {:.2f} °C".format(temp_init))
+    print("initial humidity: {:.2f} %".format(humidity_init))
 
-    wifi_manager = WiFiManager('idontknow', 'xxxxxx', 'temp_humidity', '12345678')
+    wifi_manager = WiFiManager('idontknow', 'xxxxxxx', 'temp_humidity', '12345678')
     ssid, ip_address, status = wifi_manager.configure_wifi()
-    print(f'SSID: {ssid}, IP-Adresse: {ip_address}, Status: {status}')
+    print(f'SSID: {ssid}, IP: {ip_address}, Status: {status}')
     led.fill((255, 0, 0)).write()
 
     mqtt_publisher = MQTTSensorPublisher(
-                                        broker_address="xxxxx",
+                                        broker_address="192.168.178.103",
                                         port=1883,
                                         topic="humi_temp",
-                                        username="xxxxxx",
+                                        username="homeassistant",
                                         password="xxxxxx",
                                         sensor_callback=sensor_callback
                                         )
 
     mqtt_publisher.connect()
 
-    uhr = Uhrzeit()
+    uhr = German_time()
     print(uhr)
     temperature_list = [25] * 10
     humidity_list = [14] * 10
