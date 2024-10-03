@@ -296,37 +296,43 @@ class WiFiManager:
         self.status = None
 
     def connect_to_wifi(self):
-        wlan = network.WLAN(network.STA_IF)
-        wlan.active(True)
+        try:
+            wlan = network.WLAN(network.STA_IF)
+            wlan.active(True)
 
-        if not wlan.isconnected():
-            print("testing connection to wifi")
-            wlan.connect(self.wifi_ssid, self.wifi_password)
-            while not wlan.isconnected():
-                pass
-        print("connected with:", self.wifi_ssid)
-        self.ssid = self.wifi_ssid
-        self.ip_address = wlan.ifconfig()[0]
-        print("IP-Adresse:", self.ip_address)
-        self.status = "connected"
+            if not wlan.isconnected():
+                print("Wifi - testing connection")
+                wlan.connect(self.wifi_ssid, self.wifi_password)
+                while not wlan.isconnected():
+                    pass
+            print("Wifi - connected with:", self.wifi_ssid)
+            self.ssid = self.wifi_ssid
+            self.ip_address = wlan.ifconfig()[0]
+            print("Wifi - IP-Adresse:", self.ip_address)
+            self.status = "connected"
+        except Exception as e:
+            print(f"Wifi connection failed with msg: {e}")
 
     def create_access_point(self):
-        ap = network.WLAN(network.AP_IF)
-        ap.active(True)
-        ap.config(essid=self.ap_ssid, password=self.ap_password)
-        print("access point created:")
-        print("SSID:", self.ap_ssid)
-        print("Passwort:", self.ap_password)
-        print("IP-Adresse:", ap.ifconfig()[0])
-        self.ssid = self.ap_ssid
-        self.ip_address = ap.ifconfig()[0]
-        self.status = "access point"
+        try:
+            ap = network.WLAN(network.AP_IF)
+            ap.active(True)
+            ap.config(essid=self.ap_ssid, password=self.ap_password)
+            print("Wifi - access point created:")
+            print("Wifi - SSID:", self.ap_ssid)
+            print("Wifi - Passwort:", self.ap_password)
+            print("Wifi - IP-Adresse:", ap.ifconfig()[0])
+            self.ssid = self.ap_ssid
+            self.ip_address = ap.ifconfig()[0]
+            self.status = "access point"
+        except Exception as e:
+            print(f"Wifi Access Point failed to open - msg: {e}")
 
     def configure_wifi(self):
         try:
             self.connect_to_wifi()
-        except BaseException:
-            print("cannot connect to wifi - create access point ...")
+        except Exception as e:
+            print(f"Wifi cannot connect - create access point - msg: {e})")
             self.create_access_point()
 
         return self.ssid, self.ip_address, self.status
@@ -339,10 +345,14 @@ class German_time:
         self.aktualisiere_zeit()
 
     def stelle_zeit_ein(self):
-        print("syncronize time over ntp...")
-        ntptime.host = "de.pool.ntp.org"
-        ntptime.settime()
-        print("time synchronized")
+        try:
+            print("NTP syncronize time over..")
+            ntptime.host = "de.pool.ntp.org"
+            ntptime.settime()
+            print("NTP time synchronized")
+        except Exception as e:
+            print(f"NTP Time Server Error with msg: {e})")
+
 
     def aktualisiere_zeit(self):
         zeit_utc = utime.localtime()
@@ -409,22 +419,29 @@ class MQTTSensorPublisher:
         self.topic = topic
         self.username = username
         self.password = password
-        self.client = MQTTClient("SensorPublisher", self.broker_address, self.port, self.username, self.password)
+        self.client = MQTTClient("MQTT SensorPublisher", self.broker_address, self.port, self.username, self.password)
         self.client.set_callback(self.on_message)
-        self.sensor_callback = sensor_callback
+        self.sensor_callback = sensor_callback()
 
     def on_message(self, topic, msg):
-        print("recieved data:", msg)
+        print("MQTT recieved data:", topic, msg)
 
     async def connect(self):
-        self.client.connect()
-        self.client.set_last_will(self.topic, "disconnected")
-        self.client.set_callback(self.on_message)
+        try:
+            self.client.connect()
+            self.client.set_last_will(self.topic, "MQTT disconnected")
+            self.client.set_callback(self.on_message)
+            print("MQTT connect successful")
+        except Exception as e:
+            print(f"MQTT connect failed with msg: {e}")
 
     async def publish_sensor_data(self):
-        sensor_data = await self.sensor_callback()
-        self.client.publish(self.topic, sensor_data)
-        print("sensor data send:", sensor_data)
+        try:
+            sensor_data = await self.sensor_callback()
+            self.client.publish(self.topic, sensor_data)
+            print("MQTT publish_sensor_data send:", sensor_data)
+        except Exception as e:
+            print(f"MQTT publish_sensor_data with msg: {e}")
 
     async def run(self):
         await self.connect()
@@ -499,11 +516,13 @@ async def data_to_lvgl_every_hours():
         humidity = int(d.humidity())
         ui_Humidity_data.set_text(f"{humidity} %")
 
-        led.fill((0, 0, 255)).write()
+        led.fill((0, 0, 50))
+        led.write()
 
         await asyncio.sleep(3)
 
-        led.fill((0, 255, 0)).write()
+        led.fill((0, 50, 0))
+        led.write()
 
         await asyncio.sleep(3)
 
@@ -537,43 +556,49 @@ async def main():
     uhr = German_time()
     task3 = asyncio.create_task(uhr.tick())
     task4 = asyncio.create_task(mqtt_publisher.run())
-    await asyncio.gather(task1, task2, task3, task4)
+    await asyncio.gather(task1, task2, task3)
 
 
 if __name__ == "__main__":
+    try:
+        led = neopixel.NeoPixel(Pin(36), 1)
+        led.fill((50, 50, 50))
+        led.write()
 
-    led = neopixel.NeoPixel(Pin(2), 1)
-    led.fill((255, 255, 255)).write()
+        th = task_handler.TaskHandler()
 
-    th = task_handler.TaskHandler()
+        d = dht.DHT11(machine.Pin(40))
 
-    d = dht.DHT11(machine.Pin(40))
+        d.measure()
+        temp_init = d.temperature()
+        humidity_init = d.humidity()
+        print("initial temperature: {:.2f} °C".format(temp_init))
+        print("initial humidity: {:.2f} %".format(humidity_init))
 
-    d.measure()
-    temp_init = d.temperature()
-    humidity_init = d.humidity()
-    print("initial temperature: {:.2f} °C".format(temp_init))
-    print("initial humidity: {:.2f} %".format(humidity_init))
+        wifi_manager = WiFiManager('idontknow', 'dumdidum', 'temp_humidity', '12345678')
+        ssid, ip_address, status = wifi_manager.configure_wifi()
+        print(f'SSID: {ssid}, IP: {ip_address}, Status: {status}')
+        led.fill((60, 0, 0))
+        led.write()
 
-    wifi_manager = WiFiManager('idontknow', 'xxxxxx', 'temp_humidity', '12345678')
-    ssid, ip_address, status = wifi_manager.configure_wifi()
-    print(f'SSID: {ssid}, IP: {ip_address}, Status: {status}')
-    led.fill((255, 0, 0)).write()
+        uhr = German_time()
+        print(uhr)
 
-    mqtt_publisher = MQTTSensorPublisher(
-                                        broker_address="192.168.178.103",
-                                        port=1883,
-                                        topic="humi_temp",
-                                        username="homeassistant",
-                                        password="xxxxx",
-                                        sensor_callback=sensor_callback
-                                        )
+        mqtt_publisher = MQTTSensorPublisher(
+                                            broker_address="192.168.178.103",
+                                            port=1883,
+                                            topic="humi_temp",
+                                            username="homeassistant",
+                                            password="dumdidum",
+                                            sensor_callback=sensor_callback()
+                                            )
 
-    mqtt_publisher.connect()
+        mqtt_publisher.connect()
 
-    uhr = German_time()
-    print(uhr)
-    temperature_list = [25] * 10
-    humidity_list = [14] * 10
+        temperature_list = [25] * 10
+        humidity_list = [14] * 10
 
-    asyncio.run(main())
+        asyncio.run(main())
+
+    except Exception as e:
+        print(f"Booting Error with msg: {e}")
