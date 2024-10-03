@@ -353,7 +353,6 @@ class German_time:
         except Exception as e:
             print(f"NTP Time Server Error with msg: {e})")
 
-
     def aktualisiere_zeit(self):
         zeit_utc = utime.localtime()
 
