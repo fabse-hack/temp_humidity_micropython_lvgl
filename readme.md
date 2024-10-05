@@ -51,22 +51,41 @@ The project uses asyncio for asynchronous programming. It includes:
 
 # CAD Case
 
-UNDER CONSTRUCTION!  
+Here is a photo of the full assempled project in CAD:  
+
+![temp_humidity_micropython_lvgl](temp_humidity_micropython_lvgl.png)
+  
+This photos shows only the case:  
+
+![case](case.png)  
   
 I provide CAD files in the following formats: `.par`, `.asm`, and `.stl`.
 
 For 3D printing, I have included built-in support structures. You can slice it without additional support. The support structures are in the `.asm` (assembly) file.
 
-![image](cad_case.jpg)
+![case_with_support](case_with_support.png)
 
-Here are the direct download links:
-- [Link1](#)
-- [Link2](#)
-- [Link3](#)
-- [Link4](#)
-
+Here are the direct download links:  
+  
+- assemply_files:
+  - [case_with_supports](/CAD/assemply_files/case1_support.asm)
+  
+- par_files:
+  - [only_case](/CAD/par_files/Case1.par)
+  - [support1](/CAD/par_files/support1.par)
+  - [support2](/CAD/par_files/support2.par)
+  - [support3](/CAD/par_files/support3.par)
+  
+- stl_files:
+  - [case_with_suppport](/CAD/stl_files/case1_support.stl)
+  - [only_case](/CAD/stl_files/Case1.stl)
+  - [support1](/CAD/stl_files/support1.stl)
+  - [support2](/CAD/stl_files/support2.stl)
+  - [support3](/CAD/stl_files/support3.stl)
+  
+These files should provide you with everything needed to review, modify, and print the case. If you have any questions or require further customization, please feel free to reach out!  
+  
 # To Do
-- provide CAD Files & Photos
 - add printables project site
 - add blog entry to fabse-hack
 - posting repo to kdschlossers lvgl_binding
