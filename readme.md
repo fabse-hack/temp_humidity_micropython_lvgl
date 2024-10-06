@@ -89,5 +89,4 @@ These files should provide you with everything needed to review, modify, and pri
 - add printables project site
 - add blog entry to fabse-hack
 - posting repo to kdschlossers lvgl_binding
-- Code is runnable but not yet finished (99%)
 - Create a YouTube video tutorial (unhappily, I didn't record the building process of this project)
