@@ -225,7 +225,7 @@ ui_IP_.set_align(lv.ALIGN.CENTER)
 ui_ip_data = lv.label(scrn)
 ui_ip_data.set_width(lv.SIZE_CONTENT)
 ui_ip_data.set_height(lv.SIZE_CONTENT)
-ui_ip_data.set_x(88)
+ui_ip_data.set_x(104)
 ui_ip_data.set_y(-91)
 ui_ip_data.set_align(lv.ALIGN.CENTER)
 
@@ -340,7 +340,7 @@ class WiFiManager:
 
 class German_time:
     def __init__(self):
-        self.sekunden_liste = [0]
+        self.hour_list = [0]
         self.stelle_zeit_ein()
         self.aktualisiere_zeit()
 
@@ -374,11 +374,11 @@ class German_time:
             return tag < 25
         return False
 
-    def update_sekunden_liste(self):
-        self.sekunden_liste.append(self.sekunde)
-        if len(self.sekunden_liste) > 8:
-            self.sekunden_liste.pop(0)
-        return self.sekunden_liste
+    def update_hour_list(self):
+        self.hour_list.append(self.stunde)
+        if len(self.hour_list) > 8:
+            self.hour_list.pop(0)
+        return self.hour_list
 
     def __str__(self):
         return self.zeige_zeit()
@@ -412,59 +412,51 @@ async def update_temperature_list(temp_list, humidity_list):
 
 
 class MQTTSensorPublisher:
-    def __init__(self, broker_address, port, topic, username, password, sensor_callback):
+    def __init__(self, broker_address, port, topic, username, password):
         self.broker_address = broker_address
         self.port = port
         self.topic = topic
         self.username = username
         self.password = password
-        self.client = MQTTClient("MQTT SensorPublisher", self.broker_address, self.port, self.username, self.password)
-        self.client.set_callback(self.on_message)
-        self.sensor_callback = sensor_callback()
-
-    def on_message(self, topic, msg):
-        print("MQTT recieved data:", topic, msg)
+        self.client_id = "temp_humidity_micropython_lvgl"
+        self.client = MQTTClient(self.client_id, self.broker_address, self.port, self.username, self.password)
 
     async def connect(self):
         try:
             self.client.connect()
-            self.client.set_last_will(self.topic, "MQTT disconnected")
-            self.client.set_callback(self.on_message)
+            # self.client.set_last_will(self.topic, "MQTT disconnected")
             print("MQTT connect successful")
             ui_enabled.set_text("connected")
             lv.task_handler()
+            await asyncio.sleep(2)
         except Exception as e:
             print(f"MQTT connect failed with msg: {e}")
             ui_enabled.set_text("error")
             lv.task_handler()
 
-    async def publish_sensor_data(self):
+    async def publish_sensor_data(self, temperature, humidity):
         try:
-            sensor_data = await self.sensor_callback
+            await self.connect()
+            sensor_data = (f"Temperature: {temperature}, Humidity: {humidity}")
             self.client.publish(self.topic, sensor_data)
             print("MQTT publish_sensor_data send:", sensor_data)
             ui_enabled.set_text("sending")
             lv.task_handler()
+            await asyncio.sleep(2)
+            self.client.disconnect()
+            ui_enabled.set_text("disconnect")
+            print("MQTT discconected")
         except Exception as e:
             print(f"MQTT publish_sensor_data with msg: {e}")
             ui_enabled.set_text("error")
             lv.task_handler()
 
-    async def run(self):
-        await self.connect()
-        while True:
-            ui_enabled.set_text("running")
-            lv.task_handler()
-            await self.publish_sensor_data()
-            await asyncio.sleep(10)
-            self.client.disconnect()
-
 
 async def data_to_lvgl_every_hours():
 
-    get_seconds = German_time()
+    get_hour = German_time()
     while True:
-        get_seconds.aktualisiere_zeit()
+        get_hour.aktualisiere_zeit()
         await update_temperature_list(temperature_list, humidity_list)
         print("......temperature list:", temperature_list)
         print("......humidity list:", humidity_list)
@@ -509,13 +501,13 @@ async def data_to_lvgl_every_hours():
 
         # ################# humidtiy chart END #################
 
-        sekunden_liste = get_seconds.update_sekunden_liste()
+        hour_list = get_hour.update_hour_list()
 
-        sekunden_min = sekunden_liste[0]
-        sekunden_max = sekunden_liste[-1]
+        hour_min = hour_list[0]
+        hour_max = hour_list[-1]
 
-        ui_HumidityChart_Xaxis.set_range(sekunden_min, sekunden_max)
-        ui_TemperatureChart_Xaxis.set_range(sekunden_min, sekunden_max)
+        ui_HumidityChart_Xaxis.set_range(hour_min, hour_max)
+        ui_TemperatureChart_Xaxis.set_range(hour_min, hour_max)
 
         ui_ip_data.set_text(ip_address)
         ui_connected.set_text(status)
@@ -524,21 +516,23 @@ async def data_to_lvgl_every_hours():
         humidity = int(d.humidity())
         ui_Humidity_data.set_text(f"{humidity} %")
 
+        mqtt_publisher = MQTTSensorPublisher(
+                                        broker_address="192.168.178.103",
+                                        port=1883,
+                                        topic="humi_temp",
+                                        username="homeassisant",
+                                        password="dumdidum"
+                                        )
+        await mqtt_publisher.publish_sensor_data(temperature=temperature, humidity=humidity)
         led.fill((0, 0, 50))
         led.write()
 
-        await asyncio.sleep(3)
+        await asyncio.sleep(1800)
 
         led.fill((0, 50, 0))
         led.write()
 
-        await asyncio.sleep(3)
-
-
-async def sensor_callback():
-    while True:
-        await asyncio.sleep(3)
-        return "23.5"
+        await asyncio.sleep(1800)
 
 
 async def data_to_lvgl_every_second():
@@ -563,63 +557,44 @@ async def main():
     task2 = asyncio.create_task(data_to_lvgl_every_second())
     mytime = German_time()
     task3 = asyncio.create_task(mytime.tick())
-    task4 = asyncio.create_task(mqtt_publisher.run())
-    await asyncio.gather(task1, task2, task3, task4)
+    await asyncio.gather(task1, task2, task3)
 
 
 if __name__ == "__main__":
-    try:
-        led = neopixel.NeoPixel(Pin(36), 1)
-        led.fill((50, 50, 50))
-        led.write()
-        
-        ui_enabled.set_text("booting")
-        ui_connected.set_text("booting")
-        ui_ip_data.set_text("booting")
-        utime.sleep(1)
-        
-        th = task_handler.TaskHandler()
 
-        d = dht.DHT11(machine.Pin(40))
+    led = neopixel.NeoPixel(Pin(36), 1)
+    led.fill((50, 50, 50))
+    led.write()
 
-        d.measure()
-        temp_init = d.temperature()
-        humidity_init = d.humidity()
-        print("initial temperature: {:.2f} °C".format(temp_init))
-        print("initial humidity: {:.2f} %".format(humidity_init))
+    ui_enabled.set_text("booting")
+    ui_connected.set_text("booting")
+    ui_ip_data.set_text("booting")
+    utime.sleep(1)
 
-        wifi_manager = WiFiManager('idontknow', 'dumdidum', 'temp_humidity', '12345678')
-        ssid, ip_address, status = wifi_manager.configure_wifi()
-        print(f'SSID: {ssid}, IP: {ip_address}, Status: {status}')
-        
-        ui_enabled.set_text("starting")
-        ui_connected.set_text(status)
-        ui_ip_data.set_text(ip_address)
-        utime.sleep(1)
-        
-        th = task_handler.TaskHandler()
-        
-        led.fill((60, 0, 0))
-        led.write()
+    th = task_handler.TaskHandler()
 
-        mytime = German_time()
-        print(mytime)
+    d = dht.DHT11(machine.Pin(40))
 
-        mqtt_publisher = MQTTSensorPublisher(
-                                            broker_address="192.168.178.103",
-                                            port=1883,
-                                            topic="humi_temp",
-                                            username="homeassistant",
-                                            password="dumdidum",
-                                            sensor_callback=sensor_callback()
-                                            )
+    d.measure()
+    temp_init = d.temperature()
+    humidity_init = d.humidity()
+    
+    print("initial temperature: {:.2f} °C".format(temp_init))
+    print("initial humidity: {:.2f} %".format(humidity_init))
 
-        mqtt_publisher.connect()
+    wifi_manager = WiFiManager('idontknow', 'dumdidum', 'temp_humidity', '12345678')
+    ssid, ip_address, status = wifi_manager.configure_wifi()
+    print(f'SSID: {ssid}, IP: {ip_address}, Status: {status}')
 
-        temperature_list = [25] * 10
-        humidity_list = [14] * 10
+    ui_enabled.set_text("starting")
+    ui_connected.set_text(status)
+    ui_ip_data.set_text(ip_address)
+    utime.sleep(1)
 
-        asyncio.run(main())
+    led.fill((60, 0, 0))
+    led.write()
 
-    except Exception as e:
-        print(f"Booting Error with msg: {e}")
+    temperature_list = [25] * 10
+    humidity_list = [14] * 10
+
+    asyncio.run(main())
