@@ -14,7 +14,7 @@
 - DHT11 Sensor
 - Neopixel LED (P9823)
 
-![image](ili9341+esp32_s2_mini.jpg)
+![image](temp_humidity_micropython_lvgl.jpg)
 
 # Project Description  
 In this project, I'll explain how I built a temperature and humidity display using MicroPython and LVGL.
@@ -53,7 +53,7 @@ The project uses asyncio for asynchronous programming. It includes:
 
 Here is a photo of the full assempled project in CAD:  
 
-![temp_humidity_micropython_lvgl](temp_humidity_micropython_lvgl.png)
+![temp_humidity_micropython_lvgl](temp_humidity_micropython_lvgl_CAD.png)
   
 This photos shows only the case:  
 
