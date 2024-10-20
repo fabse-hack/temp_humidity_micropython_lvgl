@@ -10,6 +10,8 @@
     - [Connection to Neopixel (LED):](#connection-to-neopixel-led)
 - [Code](#code)
 - [CAD Case](#cad-case)
+    - [Instructions for 3D Printing](#instructions-for-3d-printing)
+    - [Customization and Support](#customization-and-support)
 - [To Do](#to-do)
 
 
@@ -83,7 +85,7 @@ Here's the detailed schematic description in English, considering the specified 
 - **Data (Neopixel) -> Pin 36 (ESP32-S2 Mini)**
   - Data line to control the Neopixel.
   
-  
+
 # Code
 The project uses asyncio for asynchronous programming. It includes:
 
@@ -131,6 +133,16 @@ Here are the direct download links:
   - [support2](/CAD/stl_files/support2.stl)
   - [support3](/CAD/stl_files/support3.stl)
   
+
+### Instructions for 3D Printing
+1. **Download the Files**: Use the provided links to download the necessary files in your preferred format.
+2. **Review the Files**: Open the `.par` or `.asm` files in your CAD software to review the design. Make any necessary modifications as needed.
+3. **Slicing the Model**: Import the `.stl` file into your slicing software. If you are using the file with built-in supports (`case_with_support.stl`), ensure that you disable additional support generation in your slicer settings.
+4. **Print Settings**: Adjust your printer settings according to the material you are using. Common settings include layer height, infill density, and print speed. Refer to your 3D printer's manual for optimal settings.
+5. **Print the Case**: Start the print job and monitor the process to ensure the print adheres well to the build platform and prints correctly.
+6. **Assembly**: Once printed, remove the support structures carefully if using the support-included model. Assemble the ESP32-S2 Mini, ILI9341 display, and DHT11 sensor into the printed case.
+
+### Customization and Support
 These files should provide you with everything needed to review, modify, and print the case. If you have any questions or require further customization, please feel free to reach out!  
   
 # To Do
