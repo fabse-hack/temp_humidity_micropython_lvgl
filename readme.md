@@ -5,6 +5,9 @@
 - [Hardware](#hardware)
 - [Project Description](#project-description)
 - [Schematics](#schematics)
+    - [Connections between ESP32-S2 Mini and ILI9341 Display:](#connections-between-esp32-s2-mini-and-ili9341-display)
+    - [Connections between ESP32-S2 Mini and DHT11 Sensor:](#connections-between-esp32-s2-mini-and-dht11-sensor)
+    - [Connection to Neopixel (LED):](#connection-to-neopixel-led)
 - [Code](#code)
 - [CAD Case](#cad-case)
 - [To Do](#to-do)
@@ -45,7 +48,42 @@ In this project, I'll explain how I built a temperature and humidity display usi
 and here is the fritzing file:
 [schematics.fzz](schematics.fzz)
 
+Here's the detailed schematic description in English, considering the specified pin connections for the ESP32-S2 Mini, ILI9341 display, and DHT11 sensor:
 
+### Connections between ESP32-S2 Mini and ILI9341 Display:
+
+- **VCC (ILI9341) -> 3.3V (ESP32-S2 Mini)**
+  - Power supply for the display.
+- **GND (ILI9341) -> GND (ESP32-S2 Mini)**
+  - Common ground connection.
+- **CS (ILI9341) -> Pin 15 (ESP32-S2 Mini)**
+  - Chip Select for the display.
+- **RESET (ILI9341) -> Pin 4 (ESP32-S2 Mini)**
+  - Reset pin for the display.
+- **DC (ILI9341) -> Pin 2 (ESP32-S2 Mini)**
+  - Data/Command selection for the display.
+- **SDI/MOSI (ILI9341) -> Pin 11 (ESP32-S2 Mini)**
+  - Serial Data Input (MOSI).
+- **SCK (ILI9341) -> Pin 7 (ESP32-S2 Mini)**
+  - Serial Clock (SCK).
+- **MISO (ILI9341) -> Pin 9 (ESP32-S2 Mini)**
+  - (Optional, not always needed for SPI displays)
+  
+### Connections between ESP32-S2 Mini and DHT11 Sensor:
+
+- **VCC (DHT11) -> 3.3V (ESP32-S2 Mini)**
+  - Power supply for the sensor.
+- **GND (DHT11) -> GND (ESP32-S2 Mini)**
+  - Common ground connection.
+- **DATA (DHT11) -> Pin 40 (ESP32-S2 Mini)**
+  - Data line for temperature and humidity measurements.
+
+### Connection to Neopixel (LED):
+
+- **Data (Neopixel) -> Pin 36 (ESP32-S2 Mini)**
+  - Data line to control the Neopixel.
+  
+  
 # Code
 The project uses asyncio for asynchronous programming. It includes:
 
