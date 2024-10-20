@@ -4,9 +4,11 @@
 - [Temperature and Humidity with MicroPython and LVGL](#temperature-and-humidity-with-micropython-and-lvgl)
 - [Hardware](#hardware)
 - [Project Description](#project-description)
+- [Schematics](#schematics)
 - [Code](#code)
 - [CAD Case](#cad-case)
 - [To Do](#to-do)
+
 
 # Hardware
 - ILI9341 Display
@@ -35,6 +37,14 @@ In this project, I'll explain how I built a temperature and humidity display usi
   - **Error Exceptions:** I've implemented "try/except" blocks in several places to handle errors, timeouts, or OS errors, and log error messages in the MicroPython REPL.
   - **Automatic Y-Axis Range Adjustments:** The Y-axis range in both diagrams adjusts automatically.
   - **Automatic X-Axis Range:** The X-axis range in both diagrams updates automatically (one step per hour).
+
+# Schematics
+
+![image](schematics.png)
+
+and here is the fritzing file:
+[schematics.fzz](schematics.fzz)
+
 
 # Code
 The project uses asyncio for asynchronous programming. It includes:
@@ -86,7 +96,5 @@ Here are the direct download links:
 These files should provide you with everything needed to review, modify, and print the case. If you have any questions or require further customization, please feel free to reach out!  
   
 # To Do
-- add printables project site
-- add blog entry to fabse-hack
-- posting repo to kdschlossers lvgl_binding
+- add blog entry to [fabse-hack](https://fabse-hack.github.io/)
 - Create a YouTube video tutorial (unhappily, I didn't record the building process of this project)
