@@ -27,7 +27,7 @@
 In this project, I'll explain how I built a temperature and humidity display using MicroPython and LVGL.
 
 - **Building the Firmware:**  
-  I checked out lvgl-micropython from [lvgl-micropython](https://github.com/lvgl/lv_micropython) and built the binary file for the ESP32-S2 Mini with the ILI9341 display. I'm not sharing the exact make command because the code is still under development and there are ongoing changes.
+  I checked out lvgl-micropython from [lvgl-micropython](https://github.com/lvgl-micropython/lvgl_micropython) and built the binary file for the ESP32-S2 Mini with the ILI9341 display. I'm not sharing the exact make command because the code is still under development and there are ongoing changes.
 
 - **Wiring the ESP32-S2 Mini to the ILI9341 and DHT11:**  
   Proper connections were made between the ESP32-S2 Mini and the ILI9341 display, as well as the DHT11 sensor. You can refer to the `main.py` for the pin definitions.
